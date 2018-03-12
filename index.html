@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Capture Candidate Video</title>
+
+    <link rel="stylesheet" href="./css/bootstrap.min.css">
+    <link rel="stylesheet" href="./css/bootstrap-theme.min.css">
+
+</head>
+
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Capture Candidate Video Demo</h1>
+            <p class="lead">
+                This page demonstrates manufacture of an MPEG-4 / H.264 video file.
+            </p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-8">
+            <video autoplay muted height="360" width="640"></video>
+        </div>
+    </div>
+    <div class="row">
+        <br/>
+        <div class="col-md-8">
+            <button type="button" class="btn btn-primary btn-lg disabled" id="start">Capture Video</button>
+            <button type="button" class="btn btn-success btn-lg disabled" id="download">Download MPEG-4/H.264</button>
+        </div>
+    </div>
+</div>
+
+<script src="./js/lib/jquery-3.3.1.min.js"></script>
+<script src="./js/lib/bootstrap.min.js"></script>
+<script src="./js/lib/ffmpeg_asm.js"></script>
+<script src="./js/lib/FileSaver.min.js"></script>
+
+<script src="./js/main.js"></script>
+
+</body>
+
+</html>
