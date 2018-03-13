@@ -1,47 +1,56 @@
 /* global $ alert Blob File ffmpeg_run FileReader MediaRecorder saveAs */
 
-let file
+const state = {
 
-enableStartButton()
-disableDownloadButton()
+  /**
+   * MediaStream of webcam
+   */
+  stream: null,
 
-function enableStartButton () {
-  $('#start')
-    .prop('disabled', false)
-    .removeClass('disabled')
-    .on('click', start)
+  /**
+   * Recorded WebM/H.264
+   */
+  blob: null,
+
+  /**
+   * Transcoded MPEG-4/H.264
+   */
+  file: null
+
 }
 
-function enableDownloadButton () {
-  $('#download')
+/**
+ * Enable button in user interface.
+ */
+function enable (button, handler) {
+  $(button)
     .prop('disabled', false)
     .removeClass('disabled')
-    .on('click', download)
+    .on('click', handler)
 }
 
-function disableStartButton () {
-  $('#start')
+/**
+ * Disable button in user interface.
+ */
+function disable (button) {
+  $(button)
     .prop('disabled', true)
     .addClass('disabled')
     .off('click')
 }
 
-function disableDownloadButton () {
-  $('#download')
-    .prop('disabled', true)
-    .addClass('disabled')
-    .off('click')
-}
-
-function error (error) {
+/**
+ * Crude!
+ */
+function errorHandler (error) {
   console.error(error)
-  alert('Error! See console.')
+  alert('An error has occurred! See console for more information.')
 }
 
 /**
  * @returns Promise<MediaStream>
  */
-function getMediaStream () {
+function createMediaStream () {
   return navigator.mediaDevices.getUserMedia({
     audio: false,
     video: {
@@ -53,27 +62,34 @@ function getMediaStream () {
 }
 
 /**
- * @param stream {MediaStream}
- * @returns Promise<MediaStream>
+ * @param stream {MediaStream|null}
+ * @returns Promise<void>
  */
 function preview (stream) {
   return new Promise((resolve, reject) => {
     const video = document.querySelector('video')
-    video.srcObject = stream
-    video.onloadedmetadata = () => {
-      video.play()
-        .then(() => { resolve(stream) })
-        .catch(reject)
+    if (stream) {
+      // enable preview
+      video.srcObject = stream
+      video.onloadedmetadata = () => {
+        video.play()
+          .then(resolve)
+          .catch(reject)
+      }
+    } else {
+      // disable preview
+      video.pause()
+      video.srcObject = null
+      resolve()
     }
   })
 }
 
-function pause () {
-  const video = document.querySelector('video')
-  video.pause()
-  video.srcObject = null
-}
-
+/**
+ *
+ * @param stream
+ * @return {Promise<any>}
+ */
 function record (stream) {
   return new Promise((resolve) => {
     // hold each chunk of video data in memory
@@ -85,13 +101,12 @@ function record (stream) {
       chunks.push(event.data)
     }
     recorder.onstop = () => {
-      pause()
       resolve(new Blob(chunks, {'type': 'video/webm'}))
     }
     recorder.start()
     setTimeout(() => {
       recorder.stop()
-    }, 3000)
+    }, 5000)
   })
 }
 
@@ -114,33 +129,61 @@ function asArrayBuffer (blob) {
  * @param blob {Blob}
  * @returns Promise<File>
  */
-function convert (blob) {
+function transcode (blob) {
   // influenced by:
   // https://raw.githubusercontent.com/muaz-khan/Ffmpeg.js/master/webm-to-mp4.html
-
   return asArrayBuffer(blob)
     .then((buffer) => {
-      const result = ffmpeg_run({
+      const output = ffmpeg_run({
         arguments: '-i video.webm video.mp4'.split(' '),
         files: [{data: new Uint8Array(buffer), name: 'video.webm'}],
         TOTAL_MEMORY: 268435456 // 256 MiB
       })
-      file = new File([result[0].data], 'video.mp4', {
+      return new File([output[0].data], 'video.mp4', {
         type: 'video/mp4'
       })
-      enableDownloadButton()
     })
 }
 
-function download () {
-  saveAs(file)
+enable('#preview', previewButtonClicked)
+disable('#record')
+disable('#transcode')
+disable('#download')
+
+function previewButtonClicked () {
+  disable('#preview')
+  createMediaStream()
+    .then((stream) => {
+      state.stream = stream
+      return preview(stream)
+    })
+    .then(() => { enable('#record', recordButtonClicked) })
+    .catch(errorHandler)
 }
 
-function start () { // eslint-disable-line no-unused-vars
-  disableStartButton()
-  getMediaStream()
-    .then(preview)
-    .then(record)
-    .then(convert)
-    .catch(error)
+function recordButtonClicked () {
+  disable('#record')
+  record(state.stream)
+    .then((blob) => {
+      state.blob = blob
+    })
+    .then(() => {
+      preview(null)
+      enable('#transcode', transcodeButtonClicked)
+    })
+    .catch(errorHandler)
+}
+
+function transcodeButtonClicked () {
+  disable('#transcode')
+  transcode(state.blob)
+    .then((file) => {
+      state.file = file
+      enable('#download', downloadButtonClicked)
+    })
+}
+
+function downloadButtonClicked () {
+  disable('#download')
+  saveAs(state.file)
 }
