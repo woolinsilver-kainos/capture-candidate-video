@@ -1,4 +1,4 @@
-/* global $ alert Blob File ffmpeg_run FileReader MediaRecorder saveAs */
+/* global $ alert Blob File MediaRecorder saveAs */
 
 const state = {
 
@@ -9,11 +9,6 @@ const state = {
 
   /**
    * Recorded WebM/H.264
-   */
-  blob: null,
-
-  /**
-   * Transcoded MPEG-4/H.264
    */
   file: null
 
@@ -62,24 +57,23 @@ function createMediaStream () {
 }
 
 /**
- * @param stream {MediaStream|null}
+ * @param enable {boolean}
  * @returns Promise<void>
  */
-function preview (stream) {
+function preview (enable) {
   return new Promise((resolve, reject) => {
     const video = document.querySelector('video')
-    if (stream) {
-      // enable preview
-      video.srcObject = stream
+    if (enable) {
+      video.srcObject = state.stream
       video.onloadedmetadata = () => {
         video.play()
           .then(resolve)
           .catch(reject)
       }
     } else {
-      // disable preview
       video.pause()
       video.srcObject = null
+      state.stream.getTracks()[0].stop()
       resolve()
     }
   })
@@ -88,7 +82,7 @@ function preview (stream) {
 /**
  *
  * @param stream
- * @return {Promise<any>}
+ * @return {Promise<Blob>}
  */
 function record (stream) {
   return new Promise((resolve) => {
@@ -110,44 +104,8 @@ function record (stream) {
   })
 }
 
-/**
- * @param blob {Blob}
- * @returns Promise<ArrayBuffer>
- */
-function asArrayBuffer (blob) {
-  return new Promise(resolve => {
-    const fileReader = new FileReader()
-    fileReader.onload = () => {
-      resolve(fileReader.result)
-    }
-    fileReader.readAsArrayBuffer(blob)
-  })
-}
-
-/**
- *
- * @param blob {Blob}
- * @returns Promise<File>
- */
-function transcode (blob) {
-  // influenced by:
-  // https://raw.githubusercontent.com/muaz-khan/Ffmpeg.js/master/webm-to-mp4.html
-  return asArrayBuffer(blob)
-    .then((buffer) => {
-      const output = ffmpeg_run({
-        arguments: '-i video.webm video.mp4'.split(' '),
-        files: [{data: new Uint8Array(buffer), name: 'video.webm'}],
-        TOTAL_MEMORY: 268435456 // 256 MiB
-      })
-      return new File([output[0].data], 'video.mp4', {
-        type: 'video/mp4'
-      })
-    })
-}
-
 enable('#preview', previewButtonClicked)
 disable('#record')
-disable('#transcode')
 disable('#download')
 
 function previewButtonClicked () {
@@ -155,7 +113,7 @@ function previewButtonClicked () {
   createMediaStream()
     .then((stream) => {
       state.stream = stream
-      return preview(stream)
+      return preview(true)
     })
     .then(() => { enable('#record', recordButtonClicked) })
     .catch(errorHandler)
@@ -165,22 +123,13 @@ function recordButtonClicked () {
   disable('#record')
   record(state.stream)
     .then((blob) => {
-      state.blob = blob
+      state.file = new File([blob], 'candidate.webm', {type: 'video/webm'})
     })
     .then(() => {
-      preview(null)
-      enable('#transcode', transcodeButtonClicked)
+      enable('#download', downloadButtonClicked)
+      return preview(false)
     })
     .catch(errorHandler)
-}
-
-function transcodeButtonClicked () {
-  disable('#transcode')
-  transcode(state.blob)
-    .then((file) => {
-      state.file = file
-      enable('#download', downloadButtonClicked)
-    })
 }
 
 function downloadButtonClicked () {

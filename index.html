@@ -28,8 +28,8 @@
     <div class="row">
         <div class="col-md-4">
             <div>
-            <p>Preview:</p>
-            <video id="live" autoplay muted height="180" width="320" poster="./television.jpeg"></video>
+                <p>Preview:</p>
+                <video id="live" autoplay muted height="180" width="320" poster="./television.jpeg"></video>
             </div>
         </div>
         <div class="col-md-4">
@@ -38,19 +38,18 @@
             <br/>
             <button type="button" class="btn btn-default btn-lg btn-block disabled" id="record">Begin Recording</button>
             <br/>
-            <button type="button" class="btn btn-default btn-lg btn-block disabled" id="transcode">Perform Transcoding</button>
             <br/>
-            <button type="button" class="btn btn-default btn-lg btn-block disabled" id="download">Download MPEG-4/H.264</button>
+            <button type="button" class="btn btn-default btn-lg btn-block disabled" id="download">Download .webm</button>
+        </div>
     </div>
+
+    <script src="./js/lib/jquery-3.3.1.min.js"></script>
+    <script src="./js/lib/bootstrap.min.js"></script>
+    <script src="./js/lib/FileSaver.min.js"></script>
+
+    <script src="./js/main.js"></script>
+
 </div>
-
-<script src="./js/lib/jquery-3.3.1.min.js"></script>
-<script src="./js/lib/bootstrap.min.js"></script>
-<script src="./js/lib/ffmpeg_asm.js"></script>
-<script src="./js/lib/FileSaver.min.js"></script>
-
-<script src="./js/main.js"></script>
-
 </body>
 
 </html>
