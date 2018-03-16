@@ -5,8 +5,12 @@ function error (error) {
   alert('An error has occurred! See console for more information.')
 }
 
-function getVideoElement () {
-  return document.querySelector('video')
+function getPreviewElement () {
+  return document.querySelector('video#preview')
+}
+
+function getPlaybackElement () {
+  return document.querySelector('video#playback')
 }
 
 /**
@@ -30,30 +34,36 @@ function disableButton (button) {
 }
 
 function createStreamButtonClicked () {
-  disableButton('#create')
+  disableButton('#createButton')
   createStream()
-    .then(() => { enableButton('#record', recordStreamButtonClicked) })
+    .then(() => { enableButton('#recordButton', recordStreamButtonClicked) })
     .catch(error)
 }
 
 function recordStreamButtonClicked () {
-  disableButton('#record')
+  disableButton('#recordButton')
   recordStream()
-    .then(() => { enableButton('#download', downloadButtonClicked) })
+    .then(() => { enableButton('#playbackButton', playbackButtonClicked) })
+    .then(() => { enableButton('#downloadButton', downloadButtonClicked) })
+    .catch(error)
+}
+
+function playbackButtonClicked () {
+  disableButton('#playbackButton')
+  playbackVideo()
     .catch(error)
 }
 
 function downloadButtonClicked () {
-  disableButton('#download')
   downloadVideo()
-    .then(initializeUserInterface)
     .catch(error)
 }
 
 function initializeUserInterface () {
-  enableButton('#create', createStreamButtonClicked)
-  disableButton('#record')
-  disableButton('#download')
+  enableButton('#createButton', createStreamButtonClicked)
+  disableButton('#recordButton')
+  disableButton('#playbackButton')
+  disableButton('#downloadButton')
 }
 
 initializeUserInterface()

@@ -1,33 +1,4 @@
-/* global Blob File getVideoElement MediaRecorder saveAs */
-
-/**
- * @returns Promise<void>
- */
-function createStream () {
-  return enableWebcam()
-    .then(startPreview)
-}
-
-/**
- * @returns Promise<void>
- */
-function recordStream () {
-  return record()
-    .then(stopPreview)
-    .then(disableWebcam)
-}
-
-/**
- * @return {Promise<void>}
- */
-function downloadVideo () {
-  return new Promise(resolve => {
-    saveAs(state.file)
-    resolve()
-  })
-}
-
-// ////////////////////////////////////////////////////////////////////////////
+/* global Blob File getPlaybackElement getPreviewElement MediaRecorder saveAs */
 
 const state = {
 
@@ -46,6 +17,23 @@ const state = {
    */
   file: null
 
+}
+
+/**
+ * @returns Promise<void>
+ */
+function createStream () {
+  return enableWebcam()
+    .then(startLivePreview)
+}
+
+/**
+ * @returns Promise<void>
+ */
+function recordStream () {
+  return record()
+    .then(stopLivePreview)
+    .then(disableWebcam)
 }
 
 /**
@@ -70,9 +58,9 @@ function enableWebcam () {
 /**
  * @returns Promise<void>
  */
-function startPreview () {
+function startLivePreview () {
   return new Promise((resolve, reject) => {
-    const video = getVideoElement()
+    const video = getPreviewElement()
     video.srcObject = state.stream
     video.onloadedmetadata = () => {
       video.play()
@@ -85,8 +73,8 @@ function startPreview () {
 /**
  * @returns {void}
  */
-function stopPreview () {
-  const video = getVideoElement()
+function stopLivePreview () {
+  const video = getPreviewElement()
   video.pause()
   video.srcObject = null
 }
@@ -119,5 +107,24 @@ function record () {
     setTimeout(() => {
       recorder.stop()
     }, 5000)
+  })
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+function playbackVideo () {
+  const video = getPlaybackElement()
+  video.src = window.URL.createObjectURL(state.blob)
+  return video.play()
+}
+
+/**
+ * @return {Promise<void>}
+ */
+function downloadVideo () {
+  return new Promise(resolve => {
+    saveAs(state.file)
+    resolve()
   })
 }
